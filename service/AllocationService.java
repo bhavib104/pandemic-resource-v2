@@ -1,4 +1,3 @@
-// service/AllocationService.java
 package service;
 
 import model.Allocation;
@@ -23,19 +22,21 @@ public class AllocationService {
     }
     
     public List<Allocation> runAllocation() {
-        // Clear previous allocations
         allocationRepository.deleteAll();
-        
-        // Get current hospitals and vendors
         var hospitals = hospitalService.getAllHospitals();
         var vendors = vendorService.getAllVendors();
         
-        // Run allocation engine
+        System.out.println("=== Allocation Service ===");
+        System.out.println("Hospitals before allocation: " + hospitals.size());
+        
         List<Allocation> allocations = allocationEngine.executeAllocation(hospitals, vendors);
         
-        // Save allocations
-        allocationRepository.saveAll(allocations);
+        System.out.println("Hospitals after allocation: " + hospitals.size());
+        for (var h : hospitals) {
+            System.out.println("Hospital " + h.getId() + " inventory: " + h.getInventory());
+        }
         
+        allocationRepository.saveAll(allocations);
         return allocations;
     }
     

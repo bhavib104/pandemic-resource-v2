@@ -6,3 +6,17 @@ javac -d v2/build v2/server/_.java v2/controller/_.java v2/service/_.java v2/rep
 
 Run command:
 java -cp v2/build server.MainServer
+
+
+
+Available endpoints:
+  POST /hospitals
+  GET /hospitals
+  PUT /hospitals/{id}/demand
+  POST /vendors
+  GET /vendors
+  PUT /vendors/{id}/inventory
+  POST /allocate
+  GET /allocations
+  GET /nearest-hospitals?lat=&lon=
+  GET /resource-availability?lat=&lon=&type=

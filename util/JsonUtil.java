@@ -1,8 +1,7 @@
-// util/JsonUtil.java
 package util;
 
-import java.util.*;
 import model.*;
+import java.util.*;
 
 public class JsonUtil {
     
@@ -26,16 +25,17 @@ public class JsonUtil {
             allocation.getTimestamp());
     }
     
-    public static String toJson(List<?> items) {
+    public static String toJson(java.util.List<?> items) {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < items.size(); i++) {
             if (i > 0) sb.append(",");
-            if (items.get(i) instanceof Hospital) {
-                sb.append(toJson((Hospital) items.get(i)));
-            } else if (items.get(i) instanceof Vendor) {
-                sb.append(toJson((Vendor) items.get(i)));
-            } else if (items.get(i) instanceof Allocation) {
-                sb.append(toJson((Allocation) items.get(i)));
+            Object item = items.get(i);
+            if (item instanceof Hospital) {
+                sb.append(toJson((Hospital) item));
+            } else if (item instanceof Vendor) {
+                sb.append(toJson((Vendor) item));
+            } else if (item instanceof Allocation) {
+                sb.append(toJson((Allocation) item));
             }
         }
         sb.append("]");
@@ -43,6 +43,7 @@ public class JsonUtil {
     }
     
     private static String mapToJson(Map<String, Integer> map) {
+        if (map == null || map.isEmpty()) return "{}";
         StringBuilder sb = new StringBuilder("{");
         boolean first = true;
         for (Map.Entry<String, Integer> entry : map.entrySet()) {
@@ -58,30 +59,79 @@ public class JsonUtil {
         Map<String, Object> result = new HashMap<>();
         if (json == null || json.trim().isEmpty()) return result;
         
-        json = json.trim();
-        if (json.startsWith("{") && json.endsWith("}")) {
-            json = json.substring(1, json.length() - 1);
-            String[] pairs = json.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-            
-            for (String pair : pairs) {
-                String[] keyValue = pair.split(":", 2);
-                if (keyValue.length == 2) {
-                    String key = keyValue[0].trim().replaceAll("^\"|\"$", "");
-                    String value = keyValue[1].trim();
-                    
-                    if (value.startsWith("\"")) {
-                        result.put(key, value.replaceAll("^\"|\"$", ""));
-                    } else if (value.equals("true") || value.equals("false")) {
-                        result.put(key, Boolean.parseBoolean(value));
-                    } else if (value.contains(".")) {
-                        result.put(key, Double.parseDouble(value));
-                    } else {
-                        try {
-                            result.put(key, Integer.parseInt(value));
-                        } catch (NumberFormatException e) {
-                            result.put(key, value);
+        String trimmedJson = json.trim();
+        if (!trimmedJson.startsWith("{") || !trimmedJson.endsWith("}")) return result;
+        
+        String content = trimmedJson.substring(1, trimmedJson.length() - 1);
+        if (content.trim().isEmpty()) return result;
+        
+        String[] pairs = content.split(",");
+        
+        for (String pair : pairs) {
+            String[] keyValue = pair.split(":", 2);
+            if (keyValue.length == 2) {
+                String key = keyValue[0].trim().replaceAll("\"", "");
+                String value = keyValue[1].trim().replaceAll("\"", "");
+                
+                if (value.startsWith("{") && value.endsWith("}")) {
+                    // Handle nested object
+                    Map<String, Object> nestedResult = new HashMap<>();
+                    String nestedContent = value.substring(1, value.length() - 1);
+                    String[] nestedPairs = nestedContent.split(",");
+                    for (String nestedPair : nestedPairs) {
+                        String[] nestedKeyValue = nestedPair.split(":", 2);
+                        if (nestedKeyValue.length == 2) {
+                            String nestedKey = nestedKeyValue[0].trim().replaceAll("\"", "");
+                            String nestedValue = nestedKeyValue[1].trim().replaceAll("\"", "");
+                            try {
+                                if (nestedValue.contains(".")) {
+                                    nestedResult.put(nestedKey, Double.parseDouble(nestedValue));
+                                } else {
+                                    nestedResult.put(nestedKey, Integer.parseInt(nestedValue));
+                                }
+                            } catch (NumberFormatException e) {
+                                nestedResult.put(nestedKey, nestedValue);
+                            }
                         }
                     }
+                    result.put(key, nestedResult);
+                } else {
+                    try {
+                        if (value.contains(".")) {
+                            result.put(key, Double.parseDouble(value));
+                        } else {
+                            result.put(key, Integer.parseInt(value));
+                        }
+                    } catch (NumberFormatException e) {
+                        result.put(key, value);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+    
+    public static Map<String, Integer> extractMap(Map<String, Object> jsonMap, String key) {
+        Map<String, Integer> result = new HashMap<>();
+        
+        if (key == null) {
+            for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
+                Object value = entry.getValue();
+                if (value instanceof Number) {
+                    result.put(entry.getKey(), ((Number) value).intValue());
+                }
+            }
+            return result;
+        }
+        
+        Object obj = jsonMap.get(key);
+        if (obj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> nestedMap = (Map<String, Object>) obj;
+            for (Map.Entry<String, Object> entry : nestedMap.entrySet()) {
+                Object value = entry.getValue();
+                if (value instanceof Number) {
+                    result.put(entry.getKey(), ((Number) value).intValue());
                 }
             }
         }

@@ -1,10 +1,7 @@
-// controller/AllocationController.java
 package controller;
 
 import service.AllocationService;
 import util.JsonUtil;
-import java.util.List;
-import model.Allocation;
 
 public class AllocationController {
     private final AllocationService allocationService;
@@ -14,7 +11,8 @@ public class AllocationController {
     }
     
     public String handlePost() {
-        List<Allocation> allocations = allocationService.runAllocation();
+        var allocations = allocationService.runAllocation();
+        // After allocation, the hospitals should have updated inventory
         return JsonUtil.toJson(allocations);
     }
     
