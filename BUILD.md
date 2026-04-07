@@ -20,3 +20,6 @@ Available endpoints:
   GET /allocations
   GET /nearest-hospitals?lat=&lon=
   GET /resource-availability?lat=&lon=&type=
+
+
+  javac -d . v2/server/*.java v2/controller/*.java v2/service/*.java v2/repository/*.java v2/model/*.java v2/engine/*.java v2/util/*.java
